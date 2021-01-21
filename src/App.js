@@ -22,7 +22,7 @@ class App extends React.Component {
     const characters = await axios.get(url);
     const previousPage = await characters.data.previous;
     const nextPAGE = await characters.data.next;
-
+   
     for (const character of characters.data.results) {
       const homeworldUrlHttps = character.homeworld.split(":")[1];
       const homeworld = await axios.get("https:" + homeworldUrlHttps);
