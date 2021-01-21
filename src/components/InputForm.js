@@ -1,11 +1,10 @@
 import React from "react";
-import { InputGroup, InputGroupAddon, Input, Button } from "reactstrap";
+import { InputGroup, InputGroupAddon, Input, Button } from "reactstrap/lib";
 
-class InputForm extends React.Component {
-  render() {
+export default function InputForm(props) {
     return (
       <div className="data-container">
-        <form onSubmit={this.props.handleSearchSubmit}>
+        <form onSubmit={props.handleSearchSubmit}>
           <div className="input-search-text input-row">
             <div className="input-text-container">
               <label className=""></label>
@@ -35,7 +34,6 @@ class InputForm extends React.Component {
         </form>
       </div>
     );
-  }
 }
 
-export default InputForm;
+

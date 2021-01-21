@@ -2,74 +2,73 @@ import React from "react";
 import "./App.css";
 import axios from "axios";
 import Header from "./components/Header";
-// import InputContent from "./components/InputContent";
 import InputForm from "./components/InputForm";
-import DisplayItem from "./components/DisplayItem";
+import DisplayCharacters from "./components/DisplayCharacters";
 
 class App extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       characters: [],
-      previous: "",
-      next: "",
+      pages: {}
     };
     this.handleSearchSubmit = this.handleSearchSubmit.bind(this);
     this.handlePageSubmit = this.handlePageSubmit.bind(this);
-  }
-
-  async getCharacters(url = "https://swapi.dev/api/people/") {
-    const characters = await axios.get(url);
-    const previousPage = await characters.data.previous;
-    const nextPAGE = await characters.data.next;
-   
-    for (const character of characters.data.results) {
-      const homeworldUrlHttps = character.homeworld.split(":")[1];
-      const homeworld = await axios.get("https:" + homeworldUrlHttps);
-      character.homeworld = homeworld.data.name;
-
-      if (character.species.length === 0) {
-        character.species = "human";
-      } else {
-        const speciesUrlHttps = character.species[0].split(":")[1];
-        const species = await axios.get("https:" + speciesUrlHttps);
-        character.species = species.data.name;
-      }
-
-      this.setState({
-        characters: characters.data.results,
-        previous: previousPage,
-        next: nextPAGE,
-      });
-    }
-  }
-
-  handleSearchSubmit(event) {
-    event.preventDefault();
-    let searchItem = event.target.button.value;
-    let apiURL = "https://swapi.py4e.com/api/people/?search=" + searchItem;
-    this.getCharacters(apiURL);
-  }
-
-  handlePageSubmit(buttonName) {
-    if (buttonName === "previousButton") {
-      if (this.state.previous) {
-        const previousUrlHttps = this.state.previous.split(":")[1];
-        this.getCharacters("https:" + previousUrlHttps);
-      }
-    }
-
-    if (buttonName === "nextButton") {
-      if (this.state.next) {
-        const nextUrlHttps = this.state.next.split(":")[1];
-        this.getCharacters("https:" + nextUrlHttps);
-      }
-    }
+    this.getMissingData = this.getMissingData.bind(this); 
   }
 
   componentDidMount() {
-    this.getCharacters();
+    this.getCharacters("https://swapi.dev/api/people/");
   }
+
+
+  async getCharacters(url) {
+    const characters = await axios.get(url);
+
+    for (const character of characters.data.results) {
+        character.homeWorld = await this.getMissingData(character.homeworld); 
+      
+        if (character.species.length === 0) {
+        character.species = "human";
+      } else {
+        character.species = await this.getMissingData(character.species[0]);
+      }
+    }
+
+    this.setState({
+      characters: characters.data.results,
+      pages: { 
+        previous: this.httpToHttps(characters.data.previous), 
+        next: this.httpToHttps(characters.data.next)
+      }
+    });
+  }
+
+
+  async getMissingData(missingData) { 
+    const urlHttps = this.httpToHttps(missingData); 
+    const info = await axios.get(urlHttps);
+    return info.data.name; 
+  }
+
+  httpToHttps(url) { 
+    if (!url) {return null; }
+    return url.replace(/^http:\/\//i, 'https://'); 
+  }
+
+
+  handleSearchSubmit(event) {
+    event.preventDefault();
+    const searchTerm = event.target.button.value;
+    this.getCharacters("https://swapi.py4e.com/api/people/?search=" + searchTerm);
+  }
+
+  handlePageSubmit(buttonName) {
+   const url = this.state.pages[buttonName]; 
+    this.getCharacters(url);
+  }
+
+ 
 
   render() {
     return (
@@ -79,10 +78,10 @@ class App extends React.Component {
           characters={this.state.characters}
           handleSearchSubmit={this.handleSearchSubmit}
         />
-        <DisplayItem
+        <DisplayCharacters
           characters={this.state.characters}
-          previous={this.state.previous}
-          next={this.state.next}
+          previous={this.state.pages.previous}
+          next={this.state.pages.next}
           handlePageSubmit={this.handlePageSubmit}
         />
       </div>
